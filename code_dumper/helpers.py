@@ -1,10 +1,15 @@
 import ast
 import inspect
 import itertools
+import logging
+import types
 
 from IPython import get_ipython
 
 from code_dumper.finder import NodeFinder
+
+logger = logging.getLogger('Code Dumper')
+INDENT = ' │'
 
 
 class DefaultDictWithKey(dict):
@@ -83,3 +88,38 @@ def get_source_from_obj(obj):
         mod = inspect.getmodule(obj)
         source = inspect.getsource(mod)
     return source
+
+
+def get_name_from_obj(obj):
+    if isinstance(obj, types.FunctionType):
+        return obj.__name__
+    if isinstance(obj, type):
+        return obj.__name__
+
+    raise ValueError("No reliable way to get original variable name.")
+
+
+def format_code(code):
+    """
+    Add line numbers to code
+    :param code:
+    :return:
+    """
+    lines = code.split('\n')
+    size = len(str(len(lines) + 1))
+
+    def pad(ln):
+        return ' ' * (size - len(str(ln))) + str(ln)
+
+    return '\n'.join(
+        "{}| {}".format(pad(ln), code) for ln, code in
+        enumerate(code.split('\n'), 1))
+
+
+def log(msg, *args, depth=0):
+    logger.debug("%s " + msg, INDENT * depth, *args)
+
+
+def log_return(ret_val, depth=0):
+    log("└── %s", ret_val, depth=depth)
+    return ret_val

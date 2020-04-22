@@ -11,6 +11,9 @@ class AttributeAdder(ast.NodeVisitor):
     Add custom attributes to AST nodes to make usage easier.
     Added:
      - node.parent          -> Reference to parent node.
+     - node.parent_block    -> Reference to parent code block (e.g.
+                               if-statement, loop, function).
+     - node.var_scope       -> The variable scope this node exists in.
      - node.find_ancestor() -> Find the first ancestor node that matches the
                                query. Returns False if none found.
      On FunctionDefs,

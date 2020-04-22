@@ -2,7 +2,7 @@ import ast
 from typing import Union
 
 from code_dumper.finder import NodeFinder
-from code_dumper.helpers import get_name_nodes
+from code_dumper.helpers import get_name_nodes, log
 from code_dumper.variables import VariableScope, VariableScopeMap
 
 
@@ -21,6 +21,8 @@ class Parser:
         self.scope_map = scope_map
         self.finder = NodeFinder(root)
 
+        self.parsed = []
+
         # Parse the statements
         scp = self.scope_map.get(self.root)
         for stmt in self.root.body:
@@ -35,6 +37,11 @@ class Parser:
         :param conditional: Whether any variable changes should be treated as
             conditional or guaranteed.
         """
+        if stmt in self.parsed:
+            return log("Parser: Already parsed L%d: %s", stmt.lineno, stmt)
+        log("Parser: Parsing L%d: %s", stmt.lineno, stmt)
+        self.parsed.append(stmt)
+
         # Call the appropriate handler.
         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
             self._parse_function_def(stmt, scp, conditional)
@@ -203,3 +210,13 @@ class Parser:
         # Parse its body.
         for stmt in target.body:
             self._parse_stmt(stmt, scp, conditional)
+
+    def parse_target(self, target: ast.stmt):
+        # if target in self.parsed:
+        #     return log("Parser: Already parsed L%d: %s", target.lineno, target)
+        log("Parser: Parsing target L%d: %s", target.lineno, target)
+
+        if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return self._parse_function_call(target, False)
+
+        raise TypeError('Tried to parse unknown target type %s' % type(target))
