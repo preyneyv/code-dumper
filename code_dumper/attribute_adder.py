@@ -95,16 +95,16 @@ class AttributeAdder(ast.NodeVisitor):
         #     amazing.test() -> obj_root: Name(amazing)
         #     a.b.c.d()      -> obj_root: Name(a)
         current = node.func
-        path = []
+        # path = []
         while isinstance(current, (ast.Attribute, ast.Subscript)):
-            if isinstance(current, ast.Attribute):
-                path.append(current.attr)
-            else:
-                path.append(current.slice)
+            # if isinstance(current, ast.Attribute):
+            #     path.append(current.attr)
+            # else:
+            #     path.append(current.slice)
             current = current.value
-        path.append(current.id)
+        # path.append(current.id)
         node.root_name = current
-        node.func_path = tuple(reversed(path))
+        # node.func_path = tuple(reversed(path))
 
         self.generic_visit(node)
 

@@ -96,6 +96,7 @@ class CodeDumper:
         loaded = []
 
         for mv in var:
+            loaded.append(mv)
             target = mv.definition
             self.parser.parse_target(target)
             line_numbers.update(self._resolve_stmt_dependencies(target, loaded))

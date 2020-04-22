@@ -218,12 +218,6 @@ class Parser:
 
         # Define all the arguments as variables.
         names = set()
-        # c = []
-        # c.append(target.args.args) if hasattr(target.args, 'args') else ...
-        # c.append(target.args.posonlyargs) if hasattr(target.args, 'posonlyargs') else ...
-        # c.append(target.args.kwonlyargs) if hasattr(target.args, 'kwonlyargs') else ...
-        # c.append(target.args.vararg) if hasattr(target.args, 'vararg') else ...
-        # c.append(target.args.kwarg) if hasattr(target.args, 'kwarg') else ...
 
         consolidated = [
             *(target.args.args if hasattr(target.args, 'args') else []),
@@ -264,8 +258,6 @@ class Parser:
         """
         "Execute" all methods of the class.
         """
-        # scp = self.scope_map.get(target)
-
         for stmt in target.body:
             if not isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
