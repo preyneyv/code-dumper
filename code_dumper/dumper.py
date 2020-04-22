@@ -57,11 +57,12 @@ class CodeDumper:
             to_fix_scopes = []
             if hasattr(node, 'decorator_list'):
                 to_fix_scopes.extend(node.decorator_list)
-            if hasattr(node, 'bases'):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                to_fix_scopes.extend(node.args.defaults)
+                to_fix_scopes.extend(node.args.kw_defaults)
+            if isinstance(node, ast.ClassDef):
+                to_fix_scopes.extend(node.keywords)
                 to_fix_scopes.extend(node.bases)
-            if hasattr(node, 'args'):
-                if isinstance(node.args, ast.arguments):
-                    to_fix_scopes.extend(node.args.defaults)
 
             for to_fix in to_fix_scopes:
                 for name in get_name_nodes(to_fix, loads=True,

@@ -1,23 +1,15 @@
+from razor.blocks import Block, inputs, outputs
+from razor.pipeline import Pipeline
 from code_dumper import pretty_print
 
-def target():
-    print('first')
+x = 4
+def mult(y):
+    return x * y
 
-if True:
-    def target():
-        print('second')
+@inputs.atomic.generic('asdf')
+class AddBlock(Block):
+    def run(self, asdf):
+        return mult(asdf)
 
 
-y = 3
-a = 3
-b = 4
-x = a + b
-
-def target():
-    return x
-
-if True:
-    def target():
-        return y
-
-pretty_print(target)
+pretty_print(AddBlock, with_vars=0, with_source=0, with_logs=1)

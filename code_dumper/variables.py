@@ -1,8 +1,8 @@
 import ast
-from typing import Set, Iterable
+from typing import Iterable, Set
 
 from code_dumper.helpers import DefaultDictWithKey
-from code_dumper.memory import MemoryVariable, Memory
+from code_dumper.memory import Memory, MemoryVariable
 from code_dumper.types import T
 
 
@@ -47,6 +47,7 @@ class VariableScope(dict):
         super().__init__()
         self.map = scp_map
         self.scope_node = scope_node
+        self.is_class = isinstance(self.scope_node, ast.ClassDef)
 
     def get(self, name: str, inherit_from_parent=True) -> VariableReference:
         if name not in self:
@@ -149,7 +150,9 @@ class VariableScopeMap:
         :return: The nearest ancestor that defines the identifier.
         """
         scope = starting_scope.scope_node
-        while scope and identifier not in self.get(scope):
+        # We skip over class scopes, because they don't behave the normal way.
+        while scope and (isinstance(scope, ast.ClassDef) or
+                         identifier not in self.get(scope)):
             # get the parent scope
             scope = scope.var_scope
         return self.get(scope)

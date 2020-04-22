@@ -48,6 +48,12 @@ class MemoryVariable:
     def __str__(self):
         return "{}".format(self.address)
 
+    def clone(self):
+        mv = MemoryVariable(self.address)
+        mv.stores = self.stores.copy()
+        mv.loads = self.loads.copy()
+        mv.mutates = self.mutates.copy()
+        return mv
 
 class Memory:
     """
@@ -56,9 +62,9 @@ class Memory:
     MemoryVariable.
     """
 
-    def __init__(self):
+    def __init__(self, mem=None):
         super().__init__()
-        self._mem: List[MemoryVariable] = []
+        self._mem: List[MemoryVariable] = mem or []
 
     def new_address(self) -> MemoryVariable:
         address = len(self._mem)
@@ -71,3 +77,13 @@ class Memory:
 
     def __repr__(self):
         return repr(self._mem)
+
+    def __iter__(self):
+        return iter(self._mem)
+
+    def __len__(self):
+        return len(self._mem)
+
+    def clone(self):
+        mem = [mv.clone() for mv in self._mem]
+        return Memory(mem)

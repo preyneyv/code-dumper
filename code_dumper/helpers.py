@@ -70,6 +70,19 @@ def get_name_nodes(root, loads=False, stores=False,
     )
 
 
+def can_be_parsed(cell):
+    """
+    Check if code is syntactically accurate by attempting to create an AST. Note
+    :param cell:
+    :return:
+    """
+    try:
+        ast.parse(cell)
+    except:
+        return False
+    return True
+
+
 def get_source_from_obj(obj):
     """
     Get the source code for the file in which obj is defined, or the entire
@@ -82,7 +95,11 @@ def get_source_from_obj(obj):
         # Use _ih to get all code run in the kernel.
         # Not using kernel.ev('_ih') because we don't want to modify the input
         # history.
-        source = '\n# ---\n'.join(kernel.history_manager.input_hist_parsed)
+        all_history = kernel.history_manager.input_hist_parsed
+        # We only want syntactically valid history cells.
+
+        # filtered_history = filter()
+        source = '\n# ---\n'.join(all_history)
     else:
         # Use `inspect` to get all the source code of the module.
         mod = inspect.getmodule(obj)

@@ -11,6 +11,7 @@ class Parser:
     Parse an AST to build an understanding of variables, their usages,
     redeclarations, etc.
     """
+
     def __init__(self, root: ast.Module, scope_map: VariableScopeMap):
         """
         Instantiate a new Parser.
@@ -73,6 +74,9 @@ class Parser:
         if isinstance(stmt, (ast.With, ast.AsyncWith)):
             self._parse_with(stmt, scp, conditional)
 
+        self._parse_dependencies(stmt, scp, conditional)
+
+    def _parse_dependencies(self, stmt, scp, conditional):
         # Convert all name dependencies into VariableReferences
         deps = set()
         for name in stmt.dependencies:
@@ -99,12 +103,21 @@ class Parser:
     def _parse_function_def(self, stmt: Union[ast.FunctionDef,
                                               ast.AsyncFunctionDef],
                             scp: VariableScope, conditional: bool):
-        # Only define the function variable.
+        # Only define the function variable. The actual code execution only
+        # happens when the function is called.
         scp.new(stmt.name, conditional).add('stores', stmt)
 
     def _parse_class_def(self, stmt: ast.ClassDef, scp: VariableScope,
                          conditional: bool):
-        ...
+        # Add the class definition to the current scope.
+        scp.new(stmt.name, conditional).add('stores', stmt)
+
+        # Get the class scope.
+        scp_ = self.scope_map.get(stmt)
+
+        # Parse its body.
+        for stmt_ in stmt.body:
+            self._parse_stmt(stmt_, scp_, conditional)
 
     def _parse_import(self, stmt: Union[ast.Import, ast.ImportFrom],
                       scp: VariableScope, conditional: bool):
@@ -204,19 +217,68 @@ class Parser:
         scp = self.scope_map.get(target)
 
         # Define all the arguments as variables.
-        for arg in target.args.args:
+        names = set()
+        # c = []
+        # c.append(target.args.args) if hasattr(target.args, 'args') else ...
+        # c.append(target.args.posonlyargs) if hasattr(target.args, 'posonlyargs') else ...
+        # c.append(target.args.kwonlyargs) if hasattr(target.args, 'kwonlyargs') else ...
+        # c.append(target.args.vararg) if hasattr(target.args, 'vararg') else ...
+        # c.append(target.args.kwarg) if hasattr(target.args, 'kwarg') else ...
+
+        consolidated = [
+            *(target.args.args if hasattr(target.args, 'args') else []),
+            *(target.args.posonlyargs if hasattr(target.args, 'posonlyargs') else []),
+            *(target.args.kwonlyargs if hasattr(target.args, 'kwonlyargs') else []),
+            *([target.args.vararg] if target.args.vararg else []),
+            *([target.args.kwarg] if target.args.kwarg else []),
+        ]
+        for arg in consolidated:
+            if arg.arg in names:
+                continue
             scp.new(arg.arg, conditional).add("stores", target)
+            names.add(arg.arg)
+
+        # Store before state
+        before = self.scope_map.memory.clone()
 
         # Parse its body.
         for stmt in target.body:
             self._parse_stmt(stmt, scp, conditional)
 
+        if not call:
+            return
+
+        # Find the changes caused by "executing" the function body and link
+        # them back to the initial ast.Call so we know to include it later.
+        for i, new_mv in enumerate(self.scope_map.memory):
+            if i >= len(before):
+                # It's a new thing defined by this function.
+                new_mv.add('stores', call)
+                continue
+            old_mv = before.get(i)
+            if set(old_mv) != set(new_mv):
+                # There's been a mutation
+                new_mv.add('mutates', call)
+
+    def _parse_class_call(self, target: ast.ClassDef, conditional: bool):
+        """
+        "Execute" all methods of the class.
+        """
+        # scp = self.scope_map.get(target)
+
+        for stmt in target.body:
+            if not isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            self._parse_function_call(stmt, conditional)
+
     def parse_target(self, target: ast.stmt):
-        # if target in self.parsed:
-        #     return log("Parser: Already parsed L%d: %s", target.lineno, target)
         log("Parser: Parsing target L%d: %s", target.lineno, target)
 
         if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return self._parse_function_call(target, False)
+
+        if isinstance(target, ast.ClassDef):
+            return self._parse_class_call(target, False)
 
         raise TypeError('Tried to parse unknown target type %s' % type(target))
