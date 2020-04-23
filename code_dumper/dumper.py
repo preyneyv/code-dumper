@@ -1,5 +1,5 @@
 import ast
-from typing import Iterable, Set
+from typing import Set
 
 from code_dumper.attribute_adder import AttributeAdder
 from code_dumper.finder import NodeFinder
@@ -74,10 +74,6 @@ class CodeDumper:
             # outside in order to execute this body of code.
             node.dependencies = list(dep for dep in dependencies
                                      if dep.var_scope is node.var_scope)
-            # Also get all sub-dependencies if node is a scope.
-            # if isinstance(node, variable_scope_nodes):
-            #     node.subdependencies = list(dep for dep in dependencies
-            #                                 if dep.var_scope is node)
 
     def dump(self, name: str) -> str:
         """
@@ -103,12 +99,15 @@ class CodeDumper:
 
         return self._get_code_from_lines(line_numbers)
 
-        # if isinstance(obj, FunctionType):
-        #     *_, target = self.finder.find(nf_type=ast.FunctionDef,
-        #                                   qualname=obj.__qualname__)
-
     def _resolve_stmt_dependencies(self, stmt: ast.stmt, loaded: list = None,
                                    depth=0) -> Set[int]:
+        """
+        Recursively load all dependencies that `stmt` needs in order to execute.
+        :param stmt: The target statement.
+        :param loaded: List of dependencies that have already been loaded.
+        :param depth: Recursion depth, used for logging.
+        :return: A set of the necessary line numbers.
+        """
         loaded = loaded or []
         name = stmt
         if isinstance(stmt, variable_scope_nodes):
@@ -141,15 +140,14 @@ class CodeDumper:
         return log_return(line_numbers, depth)
 
     def _resolve_variable_dependencies(self, mv: MemoryVariable,
-                                       loaded: list = None, depth=0) -> Set[
-        int]:
+                                       loaded: list = None,
+                                       depth=0) -> Set[int]:
         """
-        Fetch all the lines that need to be present for this MemoryVariable to
-        exist.
+        Recursively load all dependencies that mv needs in order to exist.
         :param mv: The target MemoryVariable.
-        :param loaded:
-        :param depth: The current recursion depth, used for pretty debug logs.
-        :return:
+        :param loaded: List of dependencies that have already been loaded.
+        :param depth: Recursion depth, used for logging.
+        :return: A set of the necessary line numbers.
         """
         loaded = loaded or []
         if mv in loaded:
@@ -166,22 +164,6 @@ class CodeDumper:
                 self._resolve_stmt_dependencies(stmt, loaded, depth + 1))
 
         return log_return(line_numbers, depth)
-
-    def _find_min_max_lines(self, nodes: Iterable[ast.AST]) -> (int, int):
-        """
-        Find the lowest and highest line number in nodes.
-        :param nodes: Iterable of nodes to check
-        :return: The lowest and highest line numbers found
-        """
-        min_lineno = len(self.source) + 1
-        max_lineno = 0
-
-        for node in nodes:
-            if hasattr(node, "lineno"):
-                min_lineno = min(min_lineno, node.lineno)
-                max_lineno = max(max_lineno, node.lineno)
-
-        return min_lineno, max_lineno + 1
 
     def _get_line_interval(self, target: ast.AST,
                            from_lineno: int = None) -> (int, int):

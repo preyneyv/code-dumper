@@ -19,11 +19,6 @@ class MemoryVariable:
         self.stores = []
         self.loads = []
         self.mutates = []
-        # self.dels = []
-        # To store references to sub-imports,
-        # self.sub: Dict[T.VariableScopeNode, 'VariableUsageContext'] = {}
-
-        # self.inherits: 'VariableUsageContext' = self
 
     @property
     def definition(self) -> ast.stmt:
@@ -54,6 +49,7 @@ class MemoryVariable:
         mv.loads = self.loads.copy()
         mv.mutates = self.mutates.copy()
         return mv
+
 
 class Memory:
     """

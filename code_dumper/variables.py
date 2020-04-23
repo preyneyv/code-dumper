@@ -7,28 +7,63 @@ from code_dumper.types import T
 
 
 class VariableReference:
+    """
+    This data-structure stores references to MemoryVariables, similar to what
+    an identifier does in Python.
+    """
     def __init__(self, name=None, scope=None, variables=None):
+        """
+        Construct a new VariableReference.
+        :param name: The name of the identifier.
+        :param scope: The scope in which this identifier exists.
+        :param variables: The MemoryVariables this identifier might refer to.
+        """
         self.name = name
         self.scope: 'VariableScope' = scope
         self.variables: Set[MemoryVariable] = variables or set()
 
     def set(self, variables: Set[MemoryVariable], conditional=False):
+        """
+        Set the target MemoryVariables.
+        :param variables: The new MemoryVariables to be added.
+        :param conditional: Whether the context is a possibility (if-statements,
+            loops, etc.) or a guarantee (module-level code).
+        """
         if conditional:
             self.variables.update(variables)
         else:
             self.variables = variables
 
     def add(self, type_name, source_node: ast.AST):
+        """
+        Add a usage to all MemoryVariables that this identifier refers to.
+        :param type_name: The type of usage (stores/mutates/loads).
+        :param source_node: The node triggering the usage.
+        :return:
+        """
         for mv in self:
             mv.add(type_name, source_node)
 
-    def get(self):
+    def get(self) -> Set[MemoryVariable]:
+        """
+        Get all MemoryVariables that this identifier refers to.
+        :return: Set of MemoryVariables
+        """
         return self.variables
 
     def __iter__(self) -> Iterable[MemoryVariable]:
+        """
+        Iterate over every MemoryVariable.
+        """
         return iter(self.variables)
 
     def __str__(self):
+        """
+        Convert this identifier into a string representation.
+        Example: <source>.x >> 1/2
+        Where <source>.x is the qualified name of this variable and 1/2 are the
+        possible memory addresses.
+        """
         return '{}.{} >> {}'.format(self.scope, self.name,
                                     '/'.join(map(str, self.variables)))
 

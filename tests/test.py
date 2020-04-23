@@ -12,4 +12,10 @@ class AddBlock(Block):
         return mult(asdf)
 
 
-pretty_print(AddBlock, with_vars=0, with_source=0, with_logs=1)
+@inputs.atomic.generic('asd')
+@outputs.atomic.generic('df')
+class AddBlock(Block):
+    def run(self, asd, df):
+        return df.put(asd)
+
+pretty_print(AddBlock, with_source=0, with_logs=1)

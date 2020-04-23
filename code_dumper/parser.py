@@ -95,7 +95,7 @@ class Parser:
                         continue
                     if isinstance(definition, ast.FunctionDef):
                         # It's a function.
-                        self._parse_function_call(definition, conditional,
+                        self._parse_function_body(definition, conditional,
                                                   call=call)
 
         stmt.dependencies = deps
@@ -211,8 +211,14 @@ class Parser:
         for stmt_ in stmt.body:
             self._parse_stmt(stmt_, scp, conditional)
 
-    def _parse_function_call(self, target: ast.FunctionDef, conditional: bool,
+    def _parse_function_body(self, target: ast.FunctionDef, conditional: bool,
                              call: ast.Call = None):
+        if target.body in self.parsed:
+            return log("Parser: Already parsed body L%d: %s",
+                       target.lineno, target)
+        log("Parser: Parsing body L%d: %s", target.lineno, target)
+        self.parsed.append(target)
+
         # Get the new scope.
         scp = self.scope_map.get(target)
 
@@ -254,23 +260,30 @@ class Parser:
                 # There's been a mutation
                 new_mv.add('mutates', call)
 
-    def _parse_class_call(self, target: ast.ClassDef, conditional: bool):
+    def _parse_class_body(self, target: ast.ClassDef, conditional: bool):
         """
         "Execute" all methods of the class.
         """
+        if target.body in self.parsed:
+            return log("Parser: Already parsed body L%d: %s",
+                       target.lineno, target)
+        log("Parser: Parsing body L%d: %s", target.lineno, target)
+        self.parsed.append(target)
+
         for stmt in target.body:
+            # Only include methods.
             if not isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
 
-            self._parse_function_call(stmt, conditional)
+            self._parse_function_body(stmt, conditional)
 
     def parse_target(self, target: ast.stmt):
         log("Parser: Parsing target L%d: %s", target.lineno, target)
 
         if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return self._parse_function_call(target, False)
+            return self._parse_function_body(target, False)
 
         if isinstance(target, ast.ClassDef):
-            return self._parse_class_call(target, False)
+            return self._parse_class_body(target, False)
 
         raise TypeError('Tried to parse unknown target type %s' % type(target))

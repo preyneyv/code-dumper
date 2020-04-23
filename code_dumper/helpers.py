@@ -97,9 +97,8 @@ def get_source_from_obj(obj):
         # history.
         all_history = kernel.history_manager.input_hist_parsed
         # We only want syntactically valid history cells.
-
-        # filtered_history = filter()
-        source = '\n# ---\n'.join(all_history)
+        filtered_history = filter(can_be_parsed, all_history)
+        source = '\n# ---\n'.join(filtered_history)
     else:
         # Use `inspect` to get all the source code of the module.
         mod = inspect.getmodule(obj)
@@ -107,20 +106,22 @@ def get_source_from_obj(obj):
     return source
 
 
-def get_name_from_obj(obj):
+def get_name_from_obj(obj) -> str:
+    """
+    Convert the given object into an identifier name.
+    """
     if isinstance(obj, types.FunctionType):
         return obj.__name__
     if isinstance(obj, type):
         return obj.__name__
 
-    raise ValueError("No reliable way to get original variable name.")
+    raise ValueError(f"No reliable way to get original variable name from type"
+                     f"{type(obj)}.")
 
 
 def format_code(code):
     """
-    Add line numbers to code
-    :param code:
-    :return:
+    Add line numbers to code for pretty printing
     """
     lines = code.split('\n')
     size = len(str(len(lines) + 1))
@@ -134,9 +135,15 @@ def format_code(code):
 
 
 def log(msg, *args, depth=0):
+    """
+    Write to the debug logs.
+    """
     logger.debug("%s " + msg, INDENT * depth, *args)
 
 
 def log_return(ret_val, depth=0):
+    """
+    Write a return value to the debug logs.
+    """
     log("└── %s", ret_val, depth=depth)
     return ret_val

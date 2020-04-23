@@ -17,7 +17,7 @@ class NodeFinder:
         self.node = node
 
     @staticmethod
-    def matches(node, nf_type: T.NodeTupleOrNode = None, **properties):
+    def matches(node, nf_type: T.NodeTupleOrNode = None, **properties) -> bool:
         """
         Check if `node` matches type `nf_type` and has attributes corresponding
         to `properties`.
@@ -31,7 +31,7 @@ class NodeFinder:
                     -> matches Name nodes with a context of ast.Load()
               ✗ NodeFinder.matches(nf_type=ast.Name, ctx=ast.Load())
                     -> does not work
-        :return:
+        :return: Whether the node matches the requirements.
         """
         if nf_type and not isinstance(node, nf_type):
             return False

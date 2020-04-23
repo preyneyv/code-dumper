@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="code-dumper",
-    version="0.0.1",
+    version="0.0.2",
     author="Pranav Nutalapati",
     author_email="pranavnutalapati@gmail.com",
     description="A dependency analyzer and tree-shaker to dump a specific class/function.",
