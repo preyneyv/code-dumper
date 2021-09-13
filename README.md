@@ -1,4 +1,9 @@
+> **NOTE**: This project was created as a part of my internship at 
+> [RazorThink, Inc.](https://razorthink.com/), primarily for internal use,
+> and is no longer maintained. It is made public here for your perusal with the
+> permission of the company.
 # Code Dumper
+
 This library attempts to extract the minimum required amount of code for a given
 class/function to run properly.
 
